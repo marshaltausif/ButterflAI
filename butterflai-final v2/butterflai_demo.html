@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ButterflAI &mdash; Live Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --k:#0c0c10;--k2:#131318;--k3:#1b1b22;--k4:#232330;
+  --g:#d4a843;--gb:#f0c860;--gl:rgba(212,168,67,.12);
+  --t:#26c9b0;--tl:rgba(38,201,176,.11);
+  --r:#e8607a;--v:#9b7ff4;
+  --w1:#eee9e0;--w2:#9a9390;--w3:#58534e;
+  --b1:rgba(255,255,255,.055);--b2:rgba(255,255,255,.10);--b3:rgba(255,255,255,.18);
+  --fh:"Cormorant Garamond",serif;--fb:"Outfit",sans-serif;--fm:"JetBrains Mono",monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--k);color:var(--w1);font-family:var(--fb);font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
+::selection{background:rgba(212,168,67,.2)}
+
+/* Orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+.ob1{width:800px;height:800px;background:#d4a843;opacity:.055;top:-350px;right:-200px;animation:ob1 30s ease-in-out infinite}
+.ob2{width:700px;height:700px;background:#9b7ff4;opacity:.055;bottom:-300px;left:-200px;animation:ob2 36s ease-in-out infinite}
+.ob3{width:500px;height:500px;background:#26c9b0;opacity:.045;top:30%;right:3%;animation:ob3 24s ease-in-out infinite}
+@keyframes ob1{0%,100%{transform:translate(0,0)}50%{transform:translate(-80px,100px)}}
+@keyframes ob2{0%,100%{transform:translate(0,0)}50%{transform:translate(90px,-70px)}}
+@keyframes ob3{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,60px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,168,67,.4)}70%{box-shadow:0 0 0 8px rgba(212,168,67,0)}}
+
+/* Layout */
+.z{position:relative;z-index:1}
+.app{max-width:1060px;margin:0 auto;padding:0 28px 80px}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 0 22px;border-bottom:1px solid var(--b1);margin-bottom:0}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-t{font-family:var(--fh);font-size:23px;font-weight:700;letter-spacing:-.3px}
+.logo-t b{color:var(--g)}.logo-t em{color:var(--t);font-style:italic}
+.live-hbadge{display:flex;align-items:center;gap:7px;padding:6px 16px;border-radius:99px;background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.22);font-size:11px;color:var(--g);font-weight:600;letter-spacing:.3px}
+.hbdot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:blink 1.5s infinite}
+
+/* Hero */
+.hero{padding:72px 0 60px;text-align:center}
+.hero-eye{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--g);font-weight:600;margin-bottom:20px;opacity:0;animation:fu .6s ease .1s forwards}
+.hero-h{font-family:var(--fh);font-size:clamp(52px,8vw,94px);font-weight:700;line-height:1.0;letter-spacing:-2.5px;margin-bottom:16px;opacity:0;animation:fu .7s ease .25s forwards}
+.hero-h em{color:var(--g);font-style:italic}.hero-h span{color:var(--t)}
+.hero-sub{color:var(--w2);font-size:17px;font-weight:300;line-height:1.75;max-width:580px;margin:0 auto 44px;opacity:0;animation:fu .7s ease .4s forwards}
+.hero-sub strong{color:var(--w1);font-weight:500}
+.feats{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-bottom:52px;opacity:0;animation:fu .6s ease .55s forwards}
+.feat{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:99px;font-size:12px;color:var(--w2);background:rgba(255,255,255,.025);border:1px solid var(--b1);transition:all .3s}
+.feat:hover{border-color:rgba(212,168,67,.3);color:var(--g)}
+.fdot{width:4px;height:4px;border-radius:50%;background:var(--g);flex-shrink:0}
+.cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;opacity:0;animation:fu .6s ease .7s forwards}
+.btn-gold{display:flex;align-items:center;gap:8px;padding:14px 30px;border-radius:12px;background:linear-gradient(135deg,var(--g),var(--gb));color:var(--k);font-family:var(--fb);font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .25s}
+.btn-gold:hover{filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 12px 32px rgba(212,168,67,.22)}
+.btn-ghost{display:flex;align-items:center;gap:8px;padding:14px 30px;border-radius:12px;background:transparent;border:1.5px solid var(--b2);color:var(--w1);font-family:var(--fb);font-size:15px;font-weight:500;cursor:pointer;transition:all .25s}
+.btn-ghost:hover{border-color:var(--b3);background:rgba(255,255,255,.03)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:60px 0}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
+.sc{text-align:center;padding:30px 18px;background:var(--k2);border:1px solid var(--b1);border-radius:18px;transition:all .3s}
+.sc:hover{border-color:rgba(212,168,67,.2);transform:translateY(-3px)}
+.sn{font-family:var(--fh);font-size:50px;font-weight:700;letter-spacing:-2px;color:var(--g);line-height:1;margin-bottom:8px}
+.sl{font-size:12px;color:var(--w2);line-height:1.5}
+
+/* Section heads */
+.sh{text-align:center;margin-bottom:44px}
+.se{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--g);font-weight:600;margin-bottom:12px}
+.st{font-family:var(--fh);font-size:clamp(32px,4.5vw,50px);font-weight:700;letter-spacing:-1.5px;line-height:1.1;margin-bottom:12px}
+.ss{color:var(--w2);font-size:15px;line-height:1.7;max-width:540px;margin:0 auto}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--b2),transparent);margin:72px 0}
+
+/* Pipeline demo box */
+.pdemo{background:var(--k2);border:1px solid var(--b1);border-radius:22px;overflow:hidden}
+
+/* Pipeline nav */
+.pnav{display:flex;background:var(--k3);border-bottom:1px solid var(--b1);overflow-x:auto}
+.pnav::-webkit-scrollbar{display:none}
+.ps{flex:1;min-width:110px;padding:15px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;border-right:1px solid var(--b1);cursor:pointer;transition:all .2s;position:relative}
+.ps:last-child{border-right:none}
+.ps:hover{background:rgba(255,255,255,.02)}
+.ps.act{background:rgba(212,168,67,.04)}
+.ps.act::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g),var(--gb))}
+.ps.dn::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--t)}
+.pnum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;background:var(--k4);border:1px solid var(--b2);color:var(--w3);transition:all .3s}
+.ps.act .pnum{background:rgba(212,168,67,.18);border-color:rgba(212,168,67,.4);color:var(--g)}
+.ps.dn .pnum{background:rgba(38,201,176,.15);border-color:rgba(38,201,176,.35);color:var(--t)}
+.plbl{font-size:10px;color:var(--w3);font-weight:500;text-align:center;line-height:1.3;transition:color .2s}
+.ps.act .plbl{color:var(--g);font-weight:600}.ps.dn .plbl{color:var(--t)}
+
+/* Panels */
+.panel{display:none;padding:32px;animation:fu .3s ease}
+.panel.on{display:block}
+
+/* Prompt demo */
+.pbox{background:var(--k3);border:1.5px solid rgba(212,168,67,.3);border-radius:15px;padding:20px;margin-bottom:22px;box-shadow:0 0 0 4px rgba(212,168,67,.05)}
+.pkick{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--g);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.typed{font-family:var(--fh);font-size:23px;font-style:italic;color:var(--w1);line-height:1.5;min-height:34px}
+.cursor{display:inline-block;width:2px;height:22px;background:var(--g);animation:blink .7s infinite;vertical-align:middle;margin-left:3px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px;padding-top:13px;border-top:1px solid var(--b1)}
+.chip{padding:5px 12px;border-radius:99px;font-size:11px;background:var(--k4);border:1px solid var(--b2);color:var(--w2);cursor:pointer;transition:all .2s}
+.chip.hi{border-color:rgba(212,168,67,.4);color:var(--g);background:rgba(212,168,67,.08)}
+
+/* Trace */
+.trace{font-family:var(--fm);font-size:12px}
+.tl{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b1);color:var(--w2);transition:all .3s}
+.tl:last-child{border-bottom:none}
+.tl.act{color:var(--g)}.tl.dn{color:var(--w3)}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--b2);flex-shrink:0;transition:all .3s}
+.tl.act .tdot{background:var(--g);box-shadow:0 0 8px rgba(212,168,67,.6);animation:pulse 1.2s infinite}
+.tl.dn .tdot{background:var(--t)}
+
+/* Stats row in panel */
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:24px}
+@media(max-width:560px){.pgrid{grid-template-columns:1fr 1fr}}
+.pstat{background:var(--k3);border:1px solid var(--b1);border-radius:11px;padding:14px}
+.psl{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--w3);margin-bottom:5px;font-weight:600}
+.psv{font-family:var(--fh);font-size:18px;font-weight:600;letter-spacing:-.2px}
+
+/* Dataset items */
+.dsi{display:flex;align-items:flex-start;gap:13px;background:var(--k3);border:1.5px solid var(--b1);border-radius:11px;padding:14px 15px;margin-bottom:9px;cursor:pointer;transition:all .2s}
+.dsi.sel{border-color:rgba(212,168,67,.4);background:rgba(212,168,67,.03)}
+.dsr{width:15px;height:15px;border-radius:50%;border:2px solid var(--b2);flex-shrink:0;margin-top:3px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.dsi.sel .dsr{border-color:var(--g);background:var(--g)}
+.dsi.sel .dsr::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--k)}
+.dsb{flex:1;min-width:0}
+.dsnm{font-size:13px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.dmeta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.dmeta span{font-size:11px;color:var(--w2)}
+.dsdesc{font-size:11px;color:var(--w3);line-height:1.4}
+.tg{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700}
+.tg-k{background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2)}
+.tg-h{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
+.tg-s{background:rgba(38,201,176,.08);color:var(--t);border:1px solid rgba(38,201,176,.2)}
+.tg-z{background:var(--k4);color:var(--w2);border:1px solid var(--b1)}
+.ring{position:relative;width:44px;height:44px;flex-shrink:0}
+.ring-n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+
+/* Config grid */
+.cfg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.cfg{grid-template-columns:1fr}}
+.ci{background:var(--k3);border:1px solid var(--b1);border-radius:11px;padding:14px}
+.cl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--w3);margin-bottom:7px;font-weight:600}
+.cv{font-size:14px;font-weight:500}.cv.gold{color:var(--g)}
+.cb{height:4px;background:var(--k4);border-radius:99px;margin-top:7px;overflow:hidden}
+.cf{height:100%;background:linear-gradient(90deg,var(--g),var(--gb));border-radius:99px;transition:width 1s ease}
+.ai-row{display:flex;gap:9px;margin-bottom:22px;flex-wrap:wrap}
+.ai-o{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:9px;border:1.5px solid var(--b1);background:var(--k3);font-size:12px;color:var(--w2);transition:all .2s;cursor:pointer}
+.ai-o.sel{border-color:rgba(212,168,67,.4);background:var(--gl);color:var(--g)}
+.ai-bdg{font-size:9px;padding:1px 6px;border-radius:99px;font-weight:700;margin-left:2px}
+
+/* Fix banner */
+.fbanner{background:linear-gradient(135deg,rgba(212,168,67,.07),rgba(38,201,176,.04));border:1px solid rgba(212,168,67,.25);border-radius:13px;padding:18px;margin-bottom:18px}
+.fhd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.fttl{font-family:var(--fh);font-size:18px;font-weight:600;color:var(--g)}
+.fbdg{font-size:9px;padding:2px 8px;border-radius:99px;background:rgba(212,168,67,.15);color:var(--g);border:1px solid rgba(212,168,67,.3);font-weight:700;letter-spacing:.5px}
+.fsub{font-size:12px;color:var(--w2);line-height:1.65;margin-bottom:13px}
+.change{background:var(--k3);border:1px solid rgba(212,168,67,.15);border-radius:10px;padding:12px 14px;margin-bottom:7px}
+.ch-t{font-size:12px;font-weight:600;color:var(--g);margin-bottom:4px}
+.ch-r{font-size:11px;color:var(--w2);line-height:1.6;margin-bottom:7px}
+.ch-code{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.cp-rm{font-family:var(--fm);font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(232,96,122,.08);color:var(--r);border:1px solid rgba(232,96,122,.2);text-decoration:line-through}
+.cp-ad{font-family:var(--fm);font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(38,201,176,.08);color:var(--t);border:1px solid rgba(38,201,176,.2)}
+.diff{background:var(--k);border:1px solid var(--b1);border-radius:7px;font-family:var(--fm);font-size:11px;overflow:auto;max-height:180px;line-height:1.7;margin-top:12px}
+.dl{padding:1px 14px;display:flex;gap:10px;border-left:3px solid transparent}
+.dl.add{background:rgba(38,201,176,.06);border-left-color:var(--t);color:var(--t)}
+.dl.rm{background:rgba(232,96,122,.06);border-left-color:var(--r);color:var(--r);text-decoration:line-through;opacity:.7}
+.dl.sm{color:var(--w3)}.dl.el{color:var(--w3);padding:2px 14px;font-style:italic}
+.dlnn{color:var(--w3);min-width:28px;text-align:right;user-select:none;flex-shrink:0}
+
+/* Checks */
+.chk{display:flex;align-items:flex-start;gap:11px;background:var(--k3);border:1px solid var(--b1);border-radius:11px;padding:11px 14px;margin-bottom:8px}
+.chk.pass{border-color:rgba(38,201,176,.15)}.chk.warn{border-color:rgba(251,191,36,.12)}
+.chk-ic{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.chk.pass .chk-ic{background:rgba(38,201,176,.1);border:1px solid rgba(38,201,176,.25);color:var(--t)}
+.chk.warn .chk-ic{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:#fbbf24}
+.chk-t{font-size:13px;font-weight:600;margin-bottom:3px}
+.chk-d{font-size:12px;color:var(--w2);line-height:1.5}
+.chk-fix{font-size:11px;color:var(--g);margin-top:4px;font-style:italic}
+
+/* Training */
+.met-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px}
+@media(max-width:560px){.met-row{grid-template-columns:1fr 1fr}}
+.met{background:var(--k3);border:1px solid var(--b1);border-radius:11px;padding:14px;text-align:center}
+.ml{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--w3);margin-bottom:5px}
+.mv{font-family:var(--fh);font-size:25px;font-weight:700;line-height:1}
+.md{font-size:10px;color:var(--w2);margin-top:4px}
+.cgrd{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:560px){.cgrd{grid-template-columns:1fr}}
+.ccard{background:var(--k3);border:1px solid var(--b1);border-radius:11px;padding:14px}
+.clbl{font-size:10px;font-weight:600;color:var(--w2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px}
+.prog{background:var(--k3);border-radius:99px;height:4px;overflow:hidden;margin:0 0 18px}
+.pf{height:100%;background:linear-gradient(90deg,var(--g),var(--t));border-radius:99px;transition:width .4s ease}
+.eplog{background:var(--k);border:1px solid var(--b1);border-radius:10px;padding:13px;height:190px;overflow-y:auto;font-family:var(--fm);font-size:11px;line-height:1.6}
+.eplog::-webkit-scrollbar{width:3px}
+.eplog::-webkit-scrollbar-thumb{background:var(--b1);border-radius:99px}
+.ll{padding:3px 0;border-bottom:1px solid var(--b1);color:var(--w2)}
+.ll:last-child{border-bottom:none;color:var(--w1)}
+.live-bdg{display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;background:rgba(232,96,122,.1);border:1px solid rgba(232,96,122,.25);font-size:10px;font-weight:700;color:var(--r);letter-spacing:.6px}
+.ldot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink .8s infinite}
+
+/* Deploy */
+.succ{background:linear-gradient(135deg,rgba(212,168,67,.07),rgba(38,201,176,.05));border:1px solid rgba(212,168,67,.18);border-radius:15px;padding:32px;text-align:center;margin-bottom:22px;position:relative;overflow:hidden}
+.succ::before{content:"";position:absolute;font-size:120px;opacity:.04;right:-20px;top:-20px;transform:rotate(15deg);pointer-events:none}
+.succ-t{font-family:var(--fh);font-size:30px;font-weight:700;letter-spacing:-.3px;margin:12px 0 7px}
+.dlgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+@media(max-width:560px){.dlgrid{grid-template-columns:1fr}}
+.dlc{background:var(--k3);border:1.5px solid var(--b1);border-radius:14px;padding:20px;cursor:pointer;transition:all .25s}
+.dlc:hover{border-color:rgba(212,168,67,.28);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.dlc-i{font-size:28px;margin-bottom:9px;display:block}
+.dlc-t{font-size:14px;font-weight:600;margin-bottom:3px}
+.dlc-d{font-size:12px;color:var(--w2);line-height:1.5}
+.stframe{background:var(--k3);border:1px solid var(--b1);border-radius:13px;overflow:hidden}
+.stbar{background:var(--k4);padding:9px 13px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--b1)}
+.stdt{width:10px;height:10px;border-radius:50%}
+.sturl{flex:1;margin:0 10px;background:var(--k3);border:1px solid var(--b1);border-radius:5px;padding:3px 10px;font-size:10px;color:var(--w2);font-family:var(--fm)}
+.stbody{padding:20px}
+.upzone{background:var(--k2);border:2px dashed var(--b2);border-radius:11px;padding:20px;text-align:center;margin-bottom:13px}
+
+/* Controls */
+.ctrls{display:flex;align-items:center;justify-content:center;gap:11px;padding:16px 32px;border-top:1px solid var(--b1);flex-wrap:wrap}
+.cbtn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:var(--fb);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid var(--b2);background:var(--k3);color:var(--w2)}
+.cbtn:hover{border-color:var(--b3);color:var(--w1)}
+.cbtn.play{background:var(--gl);border-color:rgba(212,168,67,.3);color:var(--g)}
+.cdots{display:flex;gap:6px}
+.cdot{width:8px;height:8px;border-radius:50%;background:var(--b2);cursor:pointer;transition:all .2s}
+.cdot.on{background:var(--g);transform:scale(1.2)}
+.cinfo{font-size:11px;color:var(--w3)}
+
+/* Feature cards */
+.fcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:70px}
+@media(max-width:700px){.fcards{grid-template-columns:1fr}}
+.fcard{background:var(--k2);border:1px solid var(--b1);border-radius:17px;padding:26px;transition:all .3s}
+.fcard:hover{border-color:rgba(212,168,67,.18);transform:translateY(-2px)}
+.fico{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px}
+.ft{font-size:16px;font-weight:600;margin-bottom:7px;letter-spacing:-.2px}
+.fd{font-size:13px;color:var(--w2);line-height:1.65}
+.ftag{display:inline-block;font-size:10px;padding:3px 10px;border-radius:99px;margin-top:11px;font-weight:600;letter-spacing:.3px}
+
+/* AI provider cards */
+.aicards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin-bottom:70px}
+@media(max-width:600px){.aicards{grid-template-columns:1fr}}
+.aicard{background:var(--k2);border:1.5px solid var(--b1);border-radius:15px;padding:22px;text-align:center;transition:all .3s}
+.aicard:hover{transform:translateY(-3px)}
+.aicard.gc{border-color:rgba(66,133,244,.2)}
+.aicard.grc{border-color:rgba(155,127,244,.2)}
+.aicard.cc{border-color:rgba(204,120,92,.2)}
+.aic-icon{font-size:30px;margin-bottom:11px;font-weight:700;display:block}
+.aic-name{font-family:var(--fh);font-size:19px;font-weight:700;margin-bottom:4px;letter-spacing:-.3px}
+.aic-desc{font-size:12px;color:var(--w2);line-height:1.6;margin-bottom:12px}
+.aic-pill{display:inline-block;font-size:10px;padding:4px 12px;border-radius:99px;font-weight:700;letter-spacing:.4px}
+
+/* How it works */
+.howsteps{background:var(--k2);border:1px solid var(--b1);border-radius:18px;padding:0 30px;margin-bottom:70px}
+.hstep{display:flex;gap:22px;align-items:flex-start;padding:26px 0;border-bottom:1px solid var(--b1)}
+.hstep:last-child{border-bottom:none}
+.hnum{width:42px;height:42px;border-radius:50%;flex-shrink:0;background:var(--gl);border:1.5px solid rgba(212,168,67,.3);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:17px;font-weight:700;color:var(--g)}
+.ht{font-size:16px;font-weight:600;margin-bottom:5px;letter-spacing:-.2px}
+.hd{font-size:13px;color:var(--w2);line-height:1.65}
+.hbadge{display:inline-block;font-size:10px;padding:3px 10px;border-radius:99px;margin-top:9px;font-weight:600}
+
+footer{border-top:1px solid var(--b1);padding:36px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.fl{font-family:var(--fh);font-size:20px;font-weight:700}
+.fl b{color:var(--g)}.fl em{color:var(--t);font-style:italic}
+.flinks{display:flex;gap:22px}
+.flinks a{font-size:12px;color:var(--w3);text-decoration:none;transition:color .2s}
+.flinks a:hover{color:var(--w2)}
+.fcopy{font-size:12px;color:var(--w3)}
+</style>
+</head>
+<body>
+<div class="orb ob1"></div><div class="orb ob2"></div><div class="orb ob3"></div>
+<div class="z app">
+
+<header>
+  <div class="logo">
+    <svg width="34" height="22" viewBox="0 0 40 26" fill="none">
+      <path d="M20 13 C13 4 0 0 0 9 C0 18 10 22 20 13Z" fill="#d4a843" opacity=".95"/>
+      <path d="M20 13 C27 4 40 0 40 9 C40 18 30 22 20 13Z" fill="#26c9b0" opacity=".95"/>
+      <path d="M20 13 C13 20 1 23 2 17 C3 11 12 11 20 13Z" fill="#d4a843" opacity=".5"/>
+      <path d="M20 13 C27 20 39 23 38 17 C37 11 28 11 20 13Z" fill="#26c9b0" opacity=".5"/>
+      <ellipse cx="20" cy="13" rx="2.2" ry="2.8" fill="#eee9e0" opacity=".9"/>
+    </svg>
+    <div class="logo-t"><b>Butterfl</b><em>AI</em></div>
+  </div>
+  <div class="live-hbadge"><span class="hbdot"></span>Interactive Demo</div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eye">&#8623; End-to-End ML Training Platform</div>
+  <h1 class="hero-h">Train any model.<br><em>One sentence.</em> <span>Zero DevOps.</span></h1>
+  <p class="hero-sub">Describe your ML goal. ButterflAI finds the dataset, generates production-ready code, <strong>auto-fixes consistency issues</strong>, trains on real T4 GPUs &#8212; and delivers a working model with a live Streamlit demo.</p>
+  <div class="feats">
+    <span class="feat"><span class="fdot"></span>Auto dataset discovery</span>
+    <span class="feat"><span class="fdot"></span>3 free AI providers</span>
+    <span class="feat"><span class="fdot"></span>Consistency auto-fix + diff</span>
+    <span class="feat"><span class="fdot"></span>Live GPU training</span>
+    <span class="feat"><span class="fdot"></span>Streamlit deploy</span>
+    <span class="feat"><span class="fdot"></span>Supabase history</span>
+    <span class="feat"><span class="fdot"></span>Google Drive sync</span>
+  </div>
+  <div class="cta-row">
+    <button class="btn-gold" onclick="scrollDemo()">
+      <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      Watch Demo
+    </button>
+    <button class="btn-ghost" onclick="window.open('https://github.com','_blank')">View Code &#8594;</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="sc"><div class="sn" id="s1">0</div><div class="sl">Lines of boilerplate<br>you never write</div></div>
+  <div class="sc"><div class="sn" id="s2">0</div><div class="sl">Free AI providers<br>with auto-fallback</div></div>
+  <div class="sc"><div class="sn" id="s3">0</div><div class="sl">Consistency checks<br>before training</div></div>
+  <div class="sc"><div class="sn" id="s4">0<span style="font-size:28px;letter-spacing:0">min</span></div><div class="sl">From sentence to<br>trained model</div></div>
+</div>
+
+<!-- PIPELINE DEMO -->
+<div id="da"></div>
+<div class="sh">
+  <div class="se">&#8623; Interactive Pipeline</div>
+  <h2 class="st">Watch the full pipeline</h2>
+  <p class="ss">Click any stage or hit Auto-Play. Every feature is live &#8212; typing animation, dataset search, consistency auto-fix with diff, live training graphs.</p>
+</div>
+
+<div class="pdemo">
+  <div class="pnav">
+    <div class="ps act" id="ps1" onclick="go(1)"><div class="pnum" id="pn1">1</div><div class="plbl">Describe</div></div>
+    <div class="ps" id="ps2" onclick="go(2)"><div class="pnum" id="pn2">2</div><div class="plbl">Datasets</div></div>
+    <div class="ps" id="ps3" onclick="go(3)"><div class="pnum" id="pn3">3</div><div class="plbl">Configure</div></div>
+    <div class="ps" id="ps4" onclick="go(4)"><div class="pnum" id="pn4">4</div><div class="plbl">Validate &amp; Fix</div></div>
+    <div class="ps" id="ps5" onclick="go(5)"><div class="pnum" id="pn5">5</div><div class="plbl">Train Live</div></div>
+    <div class="ps" id="ps6" onclick="go(6)"><div class="pnum" id="pn6">6</div><div class="plbl">Deploy</div></div>
+  </div>
+
+  <!-- P1 -->
+  <div class="panel on" id="p1">
+    <div style="display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <div style="font-family:var(--fh);font-size:22px;font-weight:600;margin-bottom:6px;letter-spacing:-.3px">What do you want to build?</div>
+        <div style="color:var(--w2);font-size:13px;line-height:1.7;margin-bottom:18px">Describe your ML goal in one sentence. ButterflAI parses intent, selects architecture, and searches 25M+ datasets automatically.</div>
+        <div class="pbox">
+          <div class="pkick">&#8623; Your goal</div>
+          <div class="typed" id="typed"><span class="cursor"></span></div>
+          <div class="chips">
+            <span class="chip hi">Butterfly classifier</span>
+            <span class="chip">Wildfire detection</span>
+            <span class="chip">Skin disease AI</span>
+            <span class="chip">Car recognition</span>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:240px">
+        <div style="font-size:11px;font-weight:600;color:var(--w2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:13px">AI Analyzing&hellip;</div>
+        <div class="trace" id="tr1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P2 -->
+  <div class="panel" id="p2">
+    <div style="font-family:var(--fh);font-size:22px;font-weight:600;margin-bottom:6px;letter-spacing:-.3px">AI Analysis + Datasets Found</div>
+    <div style="color:var(--w2);font-size:13px;line-height:1.7;margin-bottom:18px">EfficientNet-B3 chosen for fine-grained visual classification. Results cached 7 days in Supabase.</div>
+    <div class="pgrid">
+      <div class="pstat"><div class="psl">Task</div><div class="psv">Image Classification</div></div>
+      <div class="pstat"><div class="psl">Architecture</div><div class="psv">EfficientNet-B3</div></div>
+      <div class="pstat"><div class="psl">Classes</div><div class="psv">5 species</div></div>
+      <div class="pstat"><div class="psl">GPU Time</div><div class="psv">18&#8211;26 min</div></div>
+    </div>
+    <div id="dslist"></div>
+  </div>
+
+  <!-- P3 -->
+  <div class="panel" id="p3">
+    <div style="font-family:var(--fh);font-size:22px;font-weight:600;margin-bottom:6px;letter-spacing:-.3px">Training Configuration</div>
+    <div style="color:var(--w2);font-size:13px;line-height:1.7;margin-bottom:16px">All values AI-prefilled. The consistency engine auto-fixes issues before any GPU time is spent.</div>
+    <div style="font-size:11px;color:var(--w2);margin-bottom:9px;font-weight:500">Choose AI Provider:</div>
+    <div class="ai-row">
+      <div class="ai-o sel"><span style="color:#4285F4;font-size:15px;font-weight:700">G</span> Gemini Flash <span class="ai-bdg" style="background:rgba(38,201,176,.12);color:var(--t)">FREE</span></div>
+      <div class="ai-o"><span style="color:#9b7ff4;font-size:15px">&#9889;</span> Groq Llama 3 <span class="ai-bdg" style="background:rgba(155,127,244,.12);color:var(--v)">FASTEST</span></div>
+      <div class="ai-o"><span style="color:#CC785C;font-size:15px">&#9670;</span> Claude Haiku <span class="ai-bdg" style="background:rgba(212,168,67,.12);color:var(--g)">BEST CODE</span></div>
+    </div>
+    <div class="cfg">
+      <div class="ci"><div class="cl">Model</div><div class="cv gold">efficientnet_b3</div></div>
+      <div class="ci"><div class="cl">Epochs</div><div class="cv gold">25</div><div class="cb"><div class="cf" style="width:25%"></div></div></div>
+      <div class="ci"><div class="cl">Batch Size</div><div class="cv gold">32</div><div class="cb"><div class="cf" style="width:25%"></div></div></div>
+      <div class="ci"><div class="cl">Learning Rate</div><div class="cv gold">1e&#8209;4</div></div>
+      <div class="ci"><div class="cl">Optimizer</div><div class="cv">AdamW</div></div>
+      <div class="ci"><div class="cl">Scheduler</div><div class="cv">Cosine Annealing</div></div>
+      <div class="ci"><div class="cl">Augmentation</div><div class="cv">Standard</div></div>
+      <div class="ci"><div class="cl">Mixed Precision</div><div class="cv" style="color:var(--t)">FP16 &#10003;</div></div>
+      <div class="ci"><div class="cl">Image Size</div><div class="cv">224 &#215; 224</div></div>
+      <div class="ci"><div class="cl">Early Stopping</div><div class="cv">Patience 5</div></div>
+    </div>
+  </div>
+
+  <!-- P4 -->
+  <div class="panel" id="p4">
+    <div style="font-family:var(--fh);font-size:22px;font-weight:600;margin-bottom:6px;letter-spacing:-.3px">Consistency Report + Auto&#8209;Fix</div>
+    <div style="color:var(--w2);font-size:13px;line-height:1.7;margin-bottom:18px">AI detected 1 issue and rewrote the affected code. Every change shows before/after + reason.</div>
+    <div class="fbanner">
+      <div class="fhd">
+        <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="var(--g)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <div class="fttl">Auto&#8209;Fixed 1 Issue</div>
+        <span class="fbdg">AUTO&#8209;REPAIRED</span>
+      </div>
+      <div class="fsub">EfficientNet-B3 at 224px with batch 64 requires ~20GB VRAM &#8212; exceeds T4&#8217;s 16GB limit. The AI detected this and automatically rewrote the batch size with a safety cap before training started.</div>
+      <div class="change">
+        <div class="ch-t">&#10022; Batch size reduced for T4 GPU memory safety</div>
+        <div class="ch-r">batch_size=64 requires ~20.5GB VRAM on EfficientNet-B3 at 224px, exceeding the T4&#8217;s 16GB limit. This would cause an OOM crash mid-training. Auto-capped to min(32, batch_size) to guarantee stable training.</div>
+        <div class="ch-code">
+          <span class="cp-rm">batch_size = 64</span>
+          <span style="color:var(--w3);font-size:12px">&#8594;</span>
+          <span class="cp-ad">bs = min(32, cfg["batch_size"])&nbsp;&nbsp;# T4 safety</span>
+        </div>
+      </div>
+      <div class="diff">
+        <div class="dl el"><span>&#8230; 23 unchanged lines &#8230;</span></div>
+        <div class="dl rm"><span class="dlnn">24</span><span>    bs = cfg["batch_size"]&nbsp;&nbsp;# 64 &#8212; will OOM on T4</span></div>
+        <div class="dl add"><span class="dlnn">24</span><span>    bs = min(32, cfg["batch_size"])&nbsp;&nbsp;# capped for T4 16GB</span></div>
+        <div class="dl sm"><span class="dlnn">25</span><span>    sz = cfg["image_size"]</span></div>
+      </div>
+    </div>
+    <div id="chklist"></div>
+  </div>
+
+  <!-- P5 -->
+  <div class="panel" id="p5">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="live-bdg"><span class="ldot"></span>TRAINING LIVE</div>
+        <span style="font-family:var(--fm);font-size:12px;color:var(--w2)">Epoch <span style="color:var(--g);font-weight:600" id="cep">0</span> / 25</span>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <span style="padding:4px 11px;border-radius:99px;font-size:10px;border:1px solid var(--b2);color:var(--w2)">NVIDIA T4 16GB &middot; Modal.com</span>
+        <span style="padding:4px 11px;border-radius:99px;font-size:10px;border:1px solid var(--b2);color:var(--w2)" id="etap">ETA: &hellip;</span>
+        <span style="padding:4px 11px;border-radius:99px;font-size:10px;border:1px solid rgba(212,168,67,.3);color:var(--g)">G Gemini Flash</span>
+      </div>
+    </div>
+    <div class="prog"><div class="pf" id="tprog" style="width:0%"></div></div>
+    <div class="met-row">
+      <div class="met"><div class="ml">Train Acc</div><div class="mv" style="color:var(--g)" id="mta">0.00%</div><div class="md" id="dta">&#8212;</div></div>
+      <div class="met"><div class="ml">Val Acc</div><div class="mv" style="color:var(--t)" id="mva">0.00%</div><div class="md" id="dva">&#8212;</div></div>
+      <div class="met"><div class="ml">Train Loss</div><div class="mv" style="color:var(--r)" id="mtl">&#8212;</div></div>
+      <div class="met"><div class="ml">Best Acc</div><div class="mv" style="color:var(--t)" id="mba">0.00%</div><div class="md">&#9733; saved</div></div>
+    </div>
+    <div class="cgrd">
+      <div class="ccard"><div class="clbl">Accuracy (%)</div><div style="height:155px"><canvas id="accc"></canvas></div></div>
+      <div class="ccard"><div class="clbl">Loss</div><div style="height:155px"><canvas id="lossc"></canvas></div></div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--w2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Training Log</div>
+    <div class="eplog" id="eplog"><div class="ll" style="color:var(--w3)">Initializing GPU runtime&hellip;</div></div>
+  </div>
+
+  <!-- P6 -->
+  <div class="panel" id="p6">
+    <div class="succ">
+      <div style="font-size:52px">&#129419;</div>
+      <div class="succ-t">Model Trained!</div>
+      <div style="color:var(--w2);font-size:14px;line-height:1.6">
+        <strong>EfficientNet-B3</strong> achieved <strong style="color:var(--t)">94.2% validation accuracy</strong> on 100+ Bird Species in 23 min.
+        <br><span style="font-size:12px;color:var(--g)">&#10022; 1 consistency issue auto-fixed before training</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:22px">
+      <div style="background:var(--k3);border:1px solid var(--b1);border-radius:11px;padding:15px;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--w3);margin-bottom:5px">Best Acc</div>
+        <div style="font-family:var(--fh);font-size:22px;font-weight:700;color:var(--t)">94.2%</div>
+      </div>
+      <div style="background:var(--k3);border:1px solid var(--b1);border-radius:11px;padding:15px;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--w3);margin-bottom:5px">Training Time</div>
+        <div style="font-family:var(--fh);font-size:22px;font-weight:700;color:var(--g)">23 min</div>
+      </div>
+      <div style="background:var(--k3);border:1px solid var(--b1);border-radius:11px;padding:15px;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--w3);margin-bottom:5px">Job ID</div>
+        <div style="font-family:var(--fm);font-size:13px;font-weight:700;color:var(--g)">JOB_4F8A2C1E</div>
+      </div>
+    </div>
+    <div class="dlgrid">
+      <div class="dlc"><span class="dlc-i">&#128230;</span><div class="dlc-t">Download Model</div><div class="dlc-d">best_model.pth + config + classes</div></div>
+      <div class="dlc"><span class="dlc-i">&#128194;</span><div class="dlc-t">Full Job Bundle</div><div class="dlc-d">train.py, model, history, manifests</div></div>
+      <div class="dlc"><span class="dlc-i">&#128640;</span><div class="dlc-t">Launch Streamlit Demo</div><div class="dlc-d">Live predictions, shareable URL</div></div>
+      <div class="dlc"><span class="dlc-i">&#9729;</span><div class="dlc-t">View on Google Drive</div><div class="dlc-d">All outputs synced automatically</div></div>
+    </div>
+    <div class="stframe">
+      <div class="stbar">
+        <div class="stdt" style="background:#ff5f57"></div><div class="stdt" style="background:#febb2c"></div><div class="stdt" style="background:#2bc840"></div>
+        <div class="sturl">butterflai.app/demo/JOB_4F8A2C1E</div>
+      </div>
+      <div class="stbody">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <svg width="24" height="16" viewBox="0 0 40 26" fill="none"><path d="M20 13 C13 4 0 0 0 9 C0 18 10 22 20 13Z" fill="#d4a843"/><path d="M20 13 C27 4 40 0 40 9 C40 18 30 22 20 13Z" fill="#26c9b0"/><circle cx="20" cy="13" r="2" fill="#eee9e0"/></svg>
+          <span style="font-family:var(--fh);font-weight:700;font-size:15px">ButterflAI Live Demo &#8212; Butterfly Species</span>
+          <span style="margin-left:auto;font-size:10px;background:rgba(38,201,176,.1);color:var(--t);padding:3px 8px;border-radius:4px;border:1px solid rgba(38,201,176,.2);font-weight:600">94.2% acc</span>
+        </div>
+        <div class="upzone">
+          <div style="font-size:24px;margin-bottom:5px">&#128206;</div>
+          <div style="font-weight:500;font-size:13px;margin-bottom:3px">Drop butterfly photo to identify species</div>
+          <div style="font-size:11px;color:var(--w2)">JPG &middot; PNG &middot; WEBP</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px">
+          <span style="background:var(--k2);border:1px solid var(--b2);padding:5px 11px;border-radius:6px;font-size:12px">Monarch</span>
+          <span style="background:var(--k2);border:1px solid var(--b2);padding:5px 11px;border-radius:6px;font-size:12px">Swallowtail</span>
+          <span style="background:var(--k2);border:1px solid var(--b2);padding:5px 11px;border-radius:6px;font-size:12px">Blue Morpho</span>
+          <span style="background:var(--k2);border:1px solid var(--b2);padding:5px 11px;border-radius:6px;font-size:12px">Cabbage White</span>
+          <span style="background:var(--k2);border:1px solid var(--b2);padding:5px 11px;border-radius:6px;font-size:12px">Red Admiral</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="ctrls">
+    <button class="cbtn play" id="pbtn" onclick="togglePlay()">
+      <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" id="pico"><path d="M8 5v14l11-7z"/></svg>
+      <span id="plbl">Auto-Play</span>
+    </button>
+    <div class="cdots" id="cdots"></div>
+    <button class="cbtn" onclick="prev()">&#8592; Prev</button>
+    <button class="cbtn" onclick="next()">Next &#8594;</button>
+    <span class="cinfo" id="slbl">Step 1 of 6</span>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<div class="sh"><div class="se">&#8623; How It Works</div><h2 class="st">Six stages. Zero friction.</h2><p class="ss">Every step is automated. You only interact where your judgment matters.</p></div>
+<div class="howsteps">
+  <div class="hstep"><div class="hnum">1</div><div><div class="ht">Describe in one sentence</div><div class="hd">Type your ML goal in plain English. ButterflAI parses intent, infers modality, task type, and expected output format automatically.</div><span class="hbadge" style="background:var(--gl);color:var(--g);border:1px solid rgba(212,168,67,.2)">Natural language &#8594; structured plan</span></div></div>
+  <div class="hstep"><div class="hnum">2</div><div><div class="ht">AI finds the best dataset</div><div class="hd">Searches Kaggle (25M+ datasets) and HuggingFace Hub, ranks by semantic relevance. Results cached 7 days in Supabase &#8212; no redundant API calls.</div><span class="hbadge" style="background:rgba(38,201,176,.08);color:var(--t);border:1px solid rgba(38,201,176,.2)">Kaggle + HuggingFace &middot; 7-day cache</span></div></div>
+  <div class="hstep"><div class="hnum">3</div><div><div class="ht">Configure with AI-prefilled hyperparams</div><div class="hd">Every hyperparameter is pre-filled. Choose between Gemini Flash (free), Groq Llama 3 (fastest, free), or Claude Haiku (best code). All auto-fallback.</div><span class="hbadge" style="background:rgba(155,127,244,.08);color:var(--v);border:1px solid rgba(155,127,244,.2)">Gemini &middot; Groq &middot; Claude</span></div></div>
+  <div class="hstep"><div class="hnum">4</div><div><div class="ht">AI validates and auto-fixes inconsistencies</div><div class="hd">10 consistency checks across dataset, config, and code. OOM risk? Wrong loss function? Class mismatch? The AI rewrites the broken section and shows you a line-level diff with the reason for every change.</div><span class="hbadge" style="background:var(--gl);color:var(--g);border:1px solid rgba(212,168,67,.2)">Auto-fix + diff + reason = full transparency</span></div></div>
+  <div class="hstep"><div class="hnum">5</div><div><div class="ht">Live training on real GPUs</div><div class="hd">Your job runs on Modal.com T4 GPUs. Logs stream in real time via SSE. Accuracy and loss curves update live, epoch by epoch. All metrics stored in Supabase.</div><span class="hbadge" style="background:rgba(232,96,122,.08);color:var(--r);border:1px solid rgba(232,96,122,.2)">Modal T4 16GB &middot; SSE live stream</span></div></div>
+  <div class="hstep"><div class="hnum">6</div><div><div class="ht">Download model + launch Streamlit demo</div><div class="hd">Download best_model.pth, run the generated streamlit_app.py, or get a shareable URL. All outputs synced to Google Drive. History forever in Supabase.</div><span class="hbadge" style="background:rgba(66,133,244,.08);color:#4285f4;border:1px solid rgba(66,133,244,.2)">Drive sync &middot; Supabase history &middot; Streamlit deploy</span></div></div>
+</div>
+
+<!-- FEATURES -->
+<div class="sh" style="margin-top:72px"><div class="se">&#8623; What Makes It Different</div><h2 class="st">Not just another wrapper</h2><p class="ss">ButterflAI is the only platform that validates and fixes training code before a single GPU second is spent.</p></div>
+<div class="fcards">
+  <div class="fcard"><div class="fico" style="background:var(--gl)">&#128269;</div><div class="ft">Consistency Auto-Fix</div><div class="fd">10 checks across dataset, config, and code. OOM risk, wrong loss function, class mismatch &#8212; the AI rewrites the broken section with a full diff and reason for every change.</div><span class="ftag" style="background:var(--gl);color:var(--g);border:1px solid rgba(212,168,67,.2)">Unique to ButterflAI</span></div>
+  <div class="fcard"><div class="fico" style="background:rgba(38,201,176,.1)">&#127489;</div><div class="ft">100% Free AI Tier</div><div class="fd">Gemini Flash (15 RPM free), Groq Llama 3.3 (14,400 req/day free), Claude Haiku. All three have automatic fallback. No paid subscription required to use ButterflAI.</div><span class="ftag" style="background:rgba(38,201,176,.08);color:var(--t);border:1px solid rgba(38,201,176,.2)">Gemini &middot; Groq &middot; Claude</span></div>
+  <div class="fcard"><div class="fico" style="background:rgba(155,127,244,.1)">&#9889;</div><div class="ft">Real GPU Training</div><div class="fd">Your code runs on actual Modal.com T4 GPUs. Live logs stream to your browser via SSE. Epoch metrics persisted to Supabase &#8212; history survives browser refreshes.</div><span class="ftag" style="background:rgba(155,127,244,.08);color:var(--v);border:1px solid rgba(155,127,244,.2)">Modal T4 &middot; SSE streaming</span></div>
+  <div class="fcard"><div class="fico" style="background:rgba(66,133,244,.1)">&#9729;</div><div class="ft">Google Drive Sync</div><div class="fd">Sign in with Google and every job file uploads automatically &#8212; train.py, config, model checkpoint, history, and the Streamlit app. No manual downloading.</div><span class="ftag" style="background:rgba(66,133,244,.08);color:#4285f4;border:1px solid rgba(66,133,244,.2)">OAuth &middot; Drive API</span></div>
+  <div class="fcard"><div class="fico" style="background:rgba(38,201,176,.1)">&#128440;</div><div class="ft">Supabase Backend</div><div class="fd">Every training run, dataset search, consistency report, epoch metric, and model output link stored in Supabase with full RLS. Dataset queries cached 7 days.</div><span class="ftag" style="background:rgba(38,201,176,.08);color:var(--t);border:1px solid rgba(38,201,176,.2)">RLS &middot; 7-day cache &middot; History</span></div>
+  <div class="fcard"><div class="fico" style="background:rgba(232,96,122,.1)">&#128640;</div><div class="ft">Instant Streamlit Demo</div><div class="fd">After training, a complete streamlit_app.py is auto-generated. Run locally in one command or deploy to Streamlit Cloud for a shareable public URL.</div><span class="ftag" style="background:rgba(232,96,122,.08);color:var(--r);border:1px solid rgba(232,96,122,.2)">Auto-generated &middot; Shareable URL</span></div>
+</div>
+
+<!-- AI PROVIDERS -->
+<div class="sh"><div class="se">&#8623; AI Providers</div><h2 class="st">Free tier. Your choice.</h2><p class="ss">All three AI providers have generous free tiers. ButterflAI tries your preferred provider first, then falls back automatically.</p></div>
+<div class="aicards">
+  <div class="aicard gc"><span class="aic-icon" style="color:#4285F4">G</span><div class="aic-name">Gemini 1.5 Flash</div><div class="aic-desc">Google&#8217;s fast multimodal model. 1M token context. Best for dataset analysis and code generation.</div><span class="aic-pill" style="background:rgba(38,201,176,.1);color:var(--t);border:1px solid rgba(38,201,176,.2)">FREE &middot; 15 RPM &middot; 1M context</span></div>
+  <div class="aicard grc"><span class="aic-icon" style="color:#9b7ff4">&#9889;</span><div class="aic-name">Groq &middot; Llama 3.3</div><div class="aic-desc">Meta&#8217;s Llama 3.3 70B on Groq LPU hardware. Fastest inference available. 14,400 requests/day free.</div><span class="aic-pill" style="background:rgba(155,127,244,.1);color:var(--v);border:1px solid rgba(155,127,244,.2)">FREE &middot; Fastest &middot; 14k req/day</span></div>
+  <div class="aicard cc"><span class="aic-icon" style="color:#CC785C">&#9670;</span><div class="aic-name">Claude Haiku</div><div class="aic-desc">Anthropic&#8217;s most efficient model. Best-in-class code generation for PyTorch training scripts. Lowest cost per token.</div><span class="aic-pill" style="background:rgba(212,168,67,.1);color:var(--g);border:1px solid rgba(212,168,67,.2)">Best code &middot; ~$0.01/job</span></div>
+</div>
+
+<footer>
+  <div class="fl"><b>Butterfl</b><em>AI</em></div>
+  <div class="flinks"><a href="#">GitHub</a><a href="#">Docs</a><a href="#">Supabase Schema</a><a href="#">Modal Worker</a></div>
+  <div class="fcopy">Built with Next.js &middot; Modal &middot; Supabase &middot; Vercel</div>
+</footer>
+
+</div>
+
+<script>
+var cur=1,playing=false,ptimer=null,acC=null,loC=null,tInt=null,tEp=0,tyTimer=null
+var PROMPTS=["Classify butterfly species from wildlife photography","Detect wildfire smoke in satellite imagery","Diagnose skin diseases from dermoscopy images"]
+var TRACES=["Parsing natural language intent","Calling Gemini Flash \u2014 free tier","Searching Kaggle (25M+ datasets)","Searching HuggingFace Hub","Ranking by semantic relevance","Building training plan"]
+var DS=[
+  {n:"100+ Bird Species Dataset",src:"kaggle",sz:"2.1GB",im:"84,635",cl:100,p:93,d:"Pre-built splits, 100 clean species, pro photography",sp:true,cmd:"kaggle datasets download -d gpiosenka/100-bird-species"},
+  {n:"Animals-10 Classification",src:"kaggle",sz:"0.5GB",im:"26,179",cl:10,p:86,d:"10 animal categories, clean labels, CC0 license",sp:false,cmd:"kaggle datasets download -d alessiocorrado99/animal10"},
+  {n:"EuroSAT Remote Sensing",src:"hf",sz:"0.9GB",im:"27,000",cl:10,p:78,d:"Satellite classification, HuggingFace ready, MIT license",sp:true,cmd:null},
+  {n:"Chest X-Ray HF Dataset",src:"hf",sz:"0.8GB",im:"5,856",cl:2,p:71,d:"Binary classification with pre-built train/val/test splits",sp:true,cmd:null}
+]
+var CHECKS=[
+  {s:"pass",t:"Dataset Format",d:"ImageFolder format fully supported by the generated training code."},
+  {s:"warn",t:"GPU Memory",d:"Auto-fixed: batch 64 \u2192 min(32, batch_size) for T4 16GB safety.",fix:"batch_size capped to min(32, cfg[\"batch_size\"])"},
+  {s:"pass",t:"Class Alignment",d:"Model output: 5 neurons = 5 dataset classes. Exact match."},
+  {s:"pass",t:"Loss Function",d:"CrossEntropyLoss correct for 5-class image classification."},
+  {s:"pass",t:"Augmentation Fit",d:"Standard augmentation appropriate for 84k-image dataset."},
+  {s:"pass",t:"Transfer Learning",d:"ImageNet pretraining provides strong initialization for butterfly species."},
+  {s:"pass",t:"Convergence",d:"LR 1e-4 + Cosine Annealing should converge within 25 epochs."},
+  {s:"pass",t:"Goal Alignment",d:"Pipeline fully aligned with: \"Classify butterfly species...\""}
+]
+function gid(id){return document.getElementById(id)}
+var sl=ms=>new Promise(r=>setTimeout(r,ms))
+function fmt(n,d){d=d||2;return Number(n).toFixed(d)}
+
+window.onload=function(){buildDots();renderDS();renderChecks();animStats();go(1)}
+
+function buildDots(){
+  var c=gid("cdots");c.innerHTML=""
+  for(var i=1;i<=6;i++){
+    var d=document.createElement("div");d.className="cdot"+(i===1?" on":"")
+    ;(function(x){d.onclick=function(){go(x)}})(i)
+    c.appendChild(d)
+  }
+}
+
+function animStats(){
+  var targets=[{id:"s1",end:2400},{id:"s2",end:3},{id:"s3",end:10},{id:"s4",end:30,suf:"min"}]
+  targets.forEach(function(t,idx){
+    setTimeout(function(){
+      var cur2=0,inc=t.end/50
+      var ti=setInterval(function(){
+        cur2=Math.min(cur2+inc,t.end)
+        var el=gid(t.id)
+        if(el)el.innerHTML=Math.round(cur2).toLocaleString()+(t.suf?"<span style='font-size:26px;letter-spacing:0'>"+t.suf+"</span>":"")
+        if(cur2>=t.end)clearInterval(ti)
+      },30)
+    },idx*200)
+  })
+}
+
+function go(n){
+  if(n<1||n>6)return
+  clearTimeout(ptimer)
+  if(n!==5&&tInt){clearInterval(tInt);tInt=null}
+  cur=n
+  for(var i=1;i<=6;i++){
+    var ps=gid("ps"+i),pn=gid("pn"+i)
+    ps.className="ps"+(i<n?" dn":i===n?" act":"")
+    pn.textContent=i<n?"✓":i
+  }
+  document.querySelectorAll(".cdot").forEach(function(d,i){d.classList.toggle("on",i+1===n)})
+  gid("slbl").textContent="Step "+n+" of 6"
+  for(var j=1;j<=6;j++){var p=gid("p"+j);if(p)p.classList.toggle("on",j===n)}
+  if(n===1)initP1()
+  else if(n===2)initP2()
+  else if(n===4)initP4()
+  else if(n===5)initP5()
+  if(playing&&n!==5){var dur=[6000,5000,5000,6000,0,5000][n-1];if(dur>0)ptimer=setTimeout(function(){go(cur+1)},dur)}
+}
+
+function next(){stopPlay();go(cur<6?cur+1:1)}
+function prev(){stopPlay();go(cur>1?cur-1:6)}
+
+function togglePlay(){
+  playing=!playing
+  var b=gid("pbtn"),ico=gid("pico"),lbl=gid("plbl")
+  if(playing){
+    b.classList.add("play")
+    ico.innerHTML="<rect x='6' y='4' width='4' height='16'/><rect x='14' y='4' width='4' height='16'/>"
+    lbl.textContent="Pause";go(1)
+  }else stopPlay()
+}
+function stopPlay(){
+  playing=false;clearTimeout(ptimer)
+  var b=gid("pbtn"),ico=gid("pico"),lbl=gid("plbl")
+  b.classList.remove("play")
+  ico.innerHTML="<path d='M8 5v14l11-7z'/>"
+  lbl.textContent="Auto-Play"
+}
+function scrollDemo(){gid("da").scrollIntoView({behavior:"smooth"});setTimeout(togglePlay,800)}
+
+function initP1(){
+  clearTimeout(tyTimer)
+  var el=gid("typed"),target=PROMPTS[0];el.innerHTML="<span class='cursor'></span>";var i=0
+  function type(){
+    if(i<=target.length){el.innerHTML=target.slice(0,i)+"<span class='cursor'></span>";i++;tyTimer=setTimeout(type,40+Math.random()*18)}
+    else{
+      document.querySelectorAll(".chip").forEach(function(c,idx){c.classList.toggle("hi",idx===0)})
+      setTimeout(function(){animTrace("tr1",TRACES,560)},400)
+    }
+  }
+  type()
+}
+
+function initP2(){
+  document.querySelectorAll(".dsi").forEach(function(d,i){
+    d.style.opacity="0";d.style.transform="translateY(8px)"
+    setTimeout(function(){d.style.transition="all .3s ease";d.style.opacity="1";d.style.transform="translateY(0)"},i*110+200)
+  })
+}
+
+function initP4(){
+  document.querySelectorAll(".chk").forEach(function(c,i){
+    c.style.opacity="0";c.style.transform="translateX(-8px)"
+    setTimeout(function(){c.style.transition="all .3s ease";c.style.opacity="1";c.style.transform="translateX(0)"},i*80+300)
+  })
+}
+
+async function animTrace(cid,steps,ms){
+  var c=gid(cid);if(!c)return
+  c.innerHTML=""
+  var els=[]
+  steps.forEach(function(s){
+    var d=document.createElement("div");d.className="tl"
+    d.innerHTML="<div class='tdot'></div><span>"+s+"</span>"
+    c.appendChild(d);els.push(d)
+  })
+  for(var i=0;i<els.length;i++){
+    if(i>0){els[i-1].classList.remove("act");els[i-1].classList.add("dn")}
+    els[i].classList.add("act")
+    await sl(ms+Math.random()*170)
+  }
+  if(els.length){els[els.length-1].classList.remove("act");els[els.length-1].classList.add("dn")}
+}
+
+function renderDS(){
+  var list=gid("dslist");if(!list)return
+  list.innerHTML=""
+  DS.forEach(function(ds,i){
+    var p=ds.p,C=2*Math.PI*16,col=p>85?"var(--t)":p>70?"var(--g)":"var(--r)"
+    var div=document.createElement("div");div.className="dsi"+(i===0?" sel":"")
+    ;(function(el,idx){el.onclick=function(){document.querySelectorAll(".dsi").forEach(function(d){d.classList.remove("sel")});el.classList.add("sel")}})(div,i)
+    div.innerHTML="<div class='dsr'></div><div class='dsb'><div class='dsnm'>"+ds.n+" <span class='tg "+(ds.src==="kaggle"?"tg-k":"tg-h")+"'>"+(ds.src==="kaggle"?"KAGGLE":"HF")+"</span> <span class='tg tg-z'>"+ds.sz+"</span>"+(ds.sp?" <span class='tg tg-s'>&#10003; Split</span>":"")+"</div><div class='dmeta'><span>"+ds.im+" imgs</span><span>"+ds.cl+" classes</span></div><div class='dsdesc'>"+ds.d+"</div>"+(ds.cmd?"<div style='font-family:var(--fm);font-size:9px;color:var(--w3);background:var(--k);border:1px solid var(--b1);padding:2px 7px;border-radius:4px;display:inline-block;margin-top:5px'>"+ds.cmd+"</div>":"")+"</div><div class='ring'><svg width='44' height='44' viewBox='0 0 44 44' style='transform:rotate(-90deg)'><circle cx='22' cy='22' r='16' fill='none' stroke='rgba(255,255,255,.05)' stroke-width='3'/><circle cx='22' cy='22' r='16' fill='none' stroke='"+col+"' stroke-width='3' stroke-dasharray='"+C.toFixed(1)+"' stroke-dashoffset='"+( C*(1-p/100)).toFixed(1)+"' stroke-linecap='round'/></svg><div class='ring-n' style='color:"+col+"'>"+p+"%</div></div>"
+    list.appendChild(div)
+  })
+}
+
+function renderChecks(){
+  var list=gid("chklist");if(!list)return
+  list.innerHTML=""
+  CHECKS.forEach(function(c){
+    var div=document.createElement("div");div.className="chk "+c.s
+    div.innerHTML="<div class='chk-ic'>"+(c.s==="pass"?"&#10003;":"&#9888;")+"</div><div><div class='chk-t'>"+c.t+"</div><div class='chk-d'>"+c.d+"</div>"+(c.fix?"<div class='chk-fix'>&#8627; Fixed: "+c.fix+"</div>":"")+"</div>"
+    list.appendChild(div)
+  })
+}
+
+function initP5(){
+  tEp=0
+  if(tInt)clearInterval(tInt)
+  var base={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"rgba(255,255,255,.3)",boxWidth:8,font:{size:10}}}},scales:{x:{grid:{color:"rgba(255,255,255,.03)"},ticks:{color:"rgba(255,255,255,.25)",font:{size:9},maxTicksLimit:7}},y:{grid:{color:"rgba(255,255,255,.03)"},ticks:{color:"rgba(255,255,255,.25)",font:{size:9}}}},animation:{duration:0}}
+  if(acC)acC.destroy()
+  acC=new Chart(gid("accc").getContext("2d"),{type:"line",data:{labels:[],datasets:[{label:"Train",data:[],borderColor:"#d4a843",backgroundColor:"rgba(212,168,67,.06)",borderWidth:1.5,pointRadius:0,tension:.4,fill:true},{label:"Val",data:[],borderColor:"#26c9b0",backgroundColor:"rgba(38,201,176,.06)",borderWidth:1.5,pointRadius:0,tension:.4,fill:true}]},options:Object.assign({},base,{scales:Object.assign({},base.scales,{y:Object.assign({},base.scales.y,{min:0,max:100})})})})
+  if(loC)loC.destroy()
+  loC=new Chart(gid("lossc").getContext("2d"),{type:"line",data:{labels:[],datasets:[{label:"Train",data:[],borderColor:"#e8607a",backgroundColor:"rgba(232,96,122,.06)",borderWidth:1.5,pointRadius:0,tension:.4,fill:true},{label:"Val",data:[],borderColor:"rgba(232,96,122,.4)",borderWidth:1,pointRadius:0,tension:.4,borderDash:[4,4]}]},options:base})
+  var log=gid("eplog");log.innerHTML=""
+  var hdr=["===================================","GPU: NVIDIA T4 16GB \u00b7 Modal.com","Model: efficientnet_b3 | Classes: 5","Dataset: 100+ Bird Species (kaggle)","AI: Gemini Flash | Auto-fixed: 1 issue","FP16: true | AdamW | LR: 0.0001","--- Training Start ---"]
+  hdr.forEach(function(l){addLog("[ButterflAI] "+l)})
+  var ep=25,best=0,startT=Date.now()
+  tInt=setInterval(function(){
+    tEp++;if(tEp>ep){
+      clearInterval(tInt);tInt=null
+      addLog("[ButterflAI] Done! Best val_acc: "+fmt(best*100)+"%")
+      addLog("[ButterflAI] Saved to Drive/ButterflAI/JOB_4F8A2C1E/")
+      if(playing)setTimeout(function(){go(6)},1500)
+      return
+    }
+    var p=tEp/ep
+    var ta=Math.min(.997,.38+.62*Math.pow(p,.36)+(Math.random()-.5)*.017)
+    var va=Math.min(.988,ta-.015-Math.random()*.024)
+    var tl=Math.max(.004,1.65*Math.exp(-3.6*p)+Math.random()*.031)
+    var vl=Math.max(.009,tl+.037+Math.random()*.041)
+    if(va>best)best=va
+    gid("cep").textContent=tEp
+    gid("tprog").style.width=(tEp/ep*100)+"%"
+    gid("mta").textContent=fmt(ta*100)+"%"
+    gid("mva").textContent=fmt(va*100)+"%"
+    gid("mtl").textContent=fmt(tl,4)
+    gid("mba").textContent=fmt(best*100)+"%"
+    var el2=(Date.now()-startT)/1000,rem=Math.max(0,(ep-tEp)*(el2/tEp))
+    gid("etap").textContent="ETA: "+(rem<60?Math.round(rem)+"s":Math.round(rem/60)+"m")
+    acC.data.labels.push(tEp)
+    acC.data.datasets[0].data.push(+(ta*100).toFixed(2))
+    acC.data.datasets[1].data.push(+(va*100).toFixed(2))
+    acC.update()
+    loC.data.labels.push(tEp)
+    loC.data.datasets[0].data.push(+tl.toFixed(4))
+    loC.data.datasets[1].data.push(+vl.toFixed(4))
+    loC.update()
+    addLog("[EPOCH:"+tEp+"/25] train_loss="+fmt(tl,4)+" train_acc="+fmt(ta*100)+"%  val_loss="+fmt(vl,4)+" val_acc="+fmt(va*100)+"%"+(va>=best-.0005?" \u2605 BEST":""))
+  },255)
+}
+
+function addLog(line){
+  var log=gid("eplog"),div=document.createElement("div");div.className="ll"
+  div.innerHTML=line
+    .replace(/(\d+\.\d+%)/g,"<span style='color:var(--t)'>$1</span>")
+    .replace(/(val_loss=[\d.]+|train_loss=[\d.]+)/g,"<span style='color:var(--r)'>$1</span>")
+    .replace(/(\[EPOCH:\d+\/25\])/g,"<span style='color:var(--g);font-weight:600'>$1</span>")
+    .replace(/(\u2605 BEST)/g,"<span style='color:var(--g)'>$1</span>")
+    .replace(/(\[ButterflAI\])/g,"<span style='color:var(--w3)'>$1</span>")
+  log.appendChild(div);log.scrollTop=log.scrollHeight
+}
+</script>
+</body>
+</html>
