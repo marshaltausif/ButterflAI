@@ -1,0 +1,19 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #0c0c10; --ink2: #141419; --ink3: #1c1c23; --ink4: #24242e;
+  --a1: #d4a843; --a1b: #f0c860; --a1l: rgba(212,168,67,.12);
+  --a2: #26c9b0; --a2l: rgba(38,201,176,.11);
+  --a3: #e8607a; --a3l: rgba(232,96,122,.10);
+  --a4: #9b7ff4;
+  --t1: #eee9e0; --t2: #9a9390; --t3: #58534e;
+  --b1: rgba(255,255,255,0.055); --b2: rgba(255,255,255,0.09); --b3: rgba(255,255,255,0.16);
+}
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ink); color: var(--t1);
+  font-family: 'Outfit', sans-serif; font-size: 14px;
+  min-height: 100vh; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 99px; }
+::selection { background: rgba(212,168,67,.22); }

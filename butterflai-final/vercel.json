@@ -1,0 +1,15 @@
+{
+  "framework": "nextjs",
+  "functions": {
+    "pages/api/train.js":    { "maxDuration": 300 },
+    "pages/api/validate.js": { "maxDuration": 60 },
+    "pages/api/analyze.js":  { "maxDuration": 30 },
+    "pages/api/drive-upload.js": { "maxDuration": 30 }
+  },
+  "headers": [
+    { "source": "/api/train", "headers": [
+      { "key": "Cache-Control", "value": "no-cache, no-transform" },
+      { "key": "X-Accel-Buffering", "value": "no" }
+    ]}
+  ]
+}
