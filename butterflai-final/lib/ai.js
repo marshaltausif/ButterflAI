@@ -1,7 +1,4 @@
-// lib/ai.js
-// Multi-provider AI layer — Claude, Gemini Flash (free), Groq Llama 3 (free)
-// All providers fall back to the next if they fail
-
+// lib/ai.js - REAL AI providers with proper error handling
 export const AI_PROVIDERS = {
   gemini: {
     name: "Gemini 1.5 Flash",
@@ -10,6 +7,8 @@ export const AI_PROVIDERS = {
     color: "#4285F4",
     description: "Google's fast free model. 1M token context.",
     icon: "G",
+    validateKey: (key) => key?.startsWith('AIza') && key.length > 30,
+    keyFormat: "AIza... (should start with 'AIza')"
   },
   groq: {
     name: "Llama 3.3 70B",
@@ -18,6 +17,8 @@ export const AI_PROVIDERS = {
     color: "#F55036",
     description: "Meta's Llama 3 on Groq hardware. Blazing fast.",
     icon: "⚡",
+    validateKey: (key) => key?.startsWith('gsk_') && key.length > 20,
+    keyFormat: "gsk_... (should start with 'gsk_')"
   },
   claude: {
     name: "Claude 3 Haiku",
@@ -26,51 +27,114 @@ export const AI_PROVIDERS = {
     color: "#CC785C",
     description: "Anthropic's efficient model. Best for code.",
     icon: "◆",
+    validateKey: (key) => key?.startsWith('sk-ant-') && key.length > 30,
+    keyFormat: "sk-ant-... (should start with 'sk-ant-')"
   },
 }
 
-// ── Main call — tries preferred, falls back down the chain ────────────────────
-export async function callAI(systemPrompt, userMessage, provider = "gemini") {
+export async function validateAPIKey(provider, key) {
+  if (!key) return { valid: false, error: "API key is required" }
+  
+  const validator = AI_PROVIDERS[provider]?.validateKey
+  if (validator && !validator(key)) {
+    return { 
+      valid: false, 
+      error: `Invalid ${AI_PROVIDERS[provider].name} key format. Expected: ${AI_PROVIDERS[provider].keyFormat}`
+    }
+  }
+  
+  // Test the key with a minimal API call
+  try {
+    const testResult = await testProviderKey(provider, key)
+    return testResult
+  } catch (error) {
+    return { valid: false, error: `Key validation failed: ${error.message}` }
+  }
+}
+
+async function testProviderKey(provider, key) {
+  switch (provider) {
+    case 'gemini':
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`,
+        { method: 'GET' }
+      )
+      if (!res.ok) throw new Error('Invalid API key')
+      return { valid: true }
+      
+    case 'groq':
+      const groqRes = await fetch('https://api.groq.com/openai/v1/models', {
+        headers: { Authorization: `Bearer ${key}` }
+      })
+      if (!groqRes.ok) throw new Error('Invalid API key')
+      return { valid: true }
+      
+    case 'claude':
+      const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 1,
+          messages: [{ role: 'user', content: 'test' }]
+        })
+      })
+      if (claudeRes.status === 401) throw new Error('Invalid API key')
+      return { valid: true }
+      
+    default:
+      return { valid: false, error: 'Unknown provider' }
+  }
+}
+
+export async function callAI(systemPrompt, userMessage, provider = "gemini", apiKey = null) {
+  // Use provided key or fall back to env var
+  const key = apiKey || process.env[`${provider.toUpperCase()}_API_KEY`]
+  
+  if (!key) {
+    throw new Error(`No API key found for ${provider}. Please provide a valid API key.`)
+  }
+
   const order = [provider, ...Object.keys(AI_PROVIDERS).filter(p => p !== provider)]
 
   for (const p of order) {
     try {
-      const result = await callProvider(p, systemPrompt, userMessage)
+      const result = await callProvider(p, systemPrompt, userMessage, 
+        apiKey || process.env[`${p.toUpperCase()}_API_KEY`])
       return { text: result, provider: p }
     } catch (err) {
       console.warn(`AI provider ${p} failed:`, err.message)
-      // Try next provider
+      if (p === provider) throw err // Only throw if preferred provider fails
     }
   }
   throw new Error("All AI providers failed")
 }
 
-async function callProvider(provider, system, user) {
+async function callProvider(provider, system, user, apiKey) {
+  if (!apiKey) throw new Error(`No API key for ${provider}`)
+  
   switch (provider) {
-    case "gemini":  return callGemini(system, user)
-    case "groq":    return callGroq(system, user)
-    case "claude":  return callClaude(system, user)
+    case "gemini":  return callGemini(system, user, apiKey)
+    case "groq":    return callGroq(system, user, apiKey)
+    case "claude":  return callClaude(system, user, apiKey)
     default: throw new Error(`Unknown provider: ${provider}`)
   }
 }
 
-// ── Gemini 1.5 Flash (FREE — 15 RPM, 1M TPM free) ───────────────────────────
-async function callGemini(system, user) {
-  if (!process.env.GEMINI_API_KEY) throw new Error("No GEMINI_API_KEY")
-
+async function callGemini(system, user, apiKey) {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         system_instruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: user }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 4096,
-          responseMimeType: "text/plain",
-        },
+        generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
       }),
     }
   )
@@ -79,15 +143,12 @@ async function callGemini(system, user) {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || ""
 }
 
-// ── Groq Llama 3.3 70B (FREE — 14400 RPD, 6000 TPM free) ────────────────────
-async function callGroq(system, user) {
-  if (!process.env.GROQ_API_KEY) throw new Error("No GROQ_API_KEY")
-
+async function callGroq(system, user, apiKey) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: "llama-3.3-70b-versatile",
@@ -104,19 +165,16 @@ async function callGroq(system, user) {
   return data.choices?.[0]?.message?.content || ""
 }
 
-// ── Anthropic Claude Haiku (lowest cost tier) ────────────────────────────────
-async function callClaude(system, user) {
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error("No ANTHROPIC_API_KEY")
-
+async function callClaude(system, user, apiKey) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
+      "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-3-haiku-20240307",
       max_tokens: 4096,
       system,
       messages: [{ role: "user", content: user }],
@@ -127,13 +185,11 @@ async function callClaude(system, user) {
   return data.content?.map(c => c.text || "").join("") || ""
 }
 
-// ── Parse JSON safely from any AI response ───────────────────────────────────
 export function parseJSON(raw) {
   const clean = raw
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/g, "")
     .trim()
-  // Sometimes models add explanation before/after JSON
   const jsonMatch = clean.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
   if (!jsonMatch) throw new Error("No JSON found in AI response")
   return JSON.parse(jsonMatch[0])
